@@ -1,0 +1,94 @@
+%六座城市的坐标
+pos_xy=[0,0;12,0;-1.8677,14.4114;-7.7733,1.8911;-2.3333,4.4222;-8.9721,8.8862];
+Distance=dist(pos_xy,pos_xy');
+
+%随机生成一条回路
+n=size(Distance,1);
+sort_rand=randperm(n);
+
+%计算初始化的CHNN输入
+V_init=zeros(n,n);
+V_init((0:n-1)*n+sort_rand)=1;
+V_init=V_init+normrnd(0,0.001,n,n);
+
+
+%路径矩阵的所有值必须大于0小于1
+numOne=find(V_init==1);
+numzero=find(V_init==0);
+if isempty(numOne)==0
+	V_init(numOne)=1-0.00001;
+else
+	if isempty(numzero)==0
+		V_init(numOne)=0.00001;
+	end
+end
+
+%绘制初始路径
+circlenum=[1:n,1];%环形路径
+Length_init=sum(sqrt((pos_xy(sort_rand([2:n,1]),1)-pos_xy(sort_rand,1)).^2+(pos_xy(sort_rand([2:n,1]),2)-pos_xy(sort_rand,2)).^2));
+figure('name','优化前路径','numbertitle','off')
+plot(pos_xy(sort_rand(circlenum),1),pos_xy(sort_rand(circlenum),2),'o-','linewidth',3);
+grid on;
+set(gca,'fontsize',16);
+for i=1:n
+	text(pos_xy(i,1),pos_xy(i,2),['    'num2str(i)]);
+end
+startnum=find(sort_rand(circlenum(1:n))==1);
+endnum=(startnum+1)*(startnum<n)+(startnum==n);
+text(pos_xy(1,1),pos_xy(1,2),['    起点']);
+text(pos_xy(sort_rand(circlenum(endnum)),1),pos_xy(sort_rand(circlenum(endnum)),2),['  终点']);   
+title(['优化前路径长度:',num2str(Length_init)]);
+xlabel('横坐标');
+ylabel('纵坐标');
+
+U0=1;
+U_init=U0/2*log(V_init./(1-V_init));
+U_M1=U_init;
+V_M1=(1+tanh(U_M1/U0))/2;
+IterMax1=10000;%迭代次数
+Tstep1=0.0001;
+E_Test=zeros(IterMax1,1);
+t_Test=(1:IterMax1)*Tstep1;
+
+A1=20;
+B1=20;
+C1=5;
+D1=20;
+%主要循环
+for k=1:IterMax1
+	dU_Test=-A1*(sum(V_M1,2)*ones(1,n)-V_M1)-B1*(ones(n,1)*sum(V_M1,1)-V_M1)-C1*(sum(V_M1(:))-n)*ones(n,n)-D1*Distance*(V_M1(:,[2:n,1])+V_M1(:,[n,1:n-1]));	
+	%dU_Test=-1*(A1*repmat(sum(V_M1,2)-1,1,n)+A1*repmat(sum(V_M1,1)-1,n,1)+D1*Distance*[V_M1(:,2:n) V_M1(:,1)]);
+	U_M1=U_M1+dU_Test*Tstep1;
+	V_M1=(1+tanh(U_M1/U0))/2;
+	E_Tesk(k)=sum(sum(A1/2*V_M1'*V_M1+B1/2*V_M1*V_M1'-(A1+B1)/2*V_M1.^2))+C1/2*(sum(V_M1(:))-n)^2+D1/2*sum(sum(Distance.*(V_M1(:,[2:n,1])+V_M1(:,[n,1:n-1]))'));
+end
+%figure('name','');
+
+V_Choose=[V_M1];
+V_opt=zeros(n,n);
+[V_max,nummax]=max(V_Choose(:,1:n));
+for i=1:n
+	V_opt(nummax(i),i)=1;
+end
+C=sum(V_opt,1);
+R=sum(V_opt,2);
+flag=isequal(C,ones(1,n))&isequal(R',ones(1,n));%检查输出的解是否合法
+
+if flag==1
+	[Vmax,nummaxopt]=max(V_opt);
+	V_opt_sort=V_opt(nummaxopt,:);
+	Length_opt=sum(sqrt((pos_xy(nummaxopt([2:n,1]),1)-pos_xy(nummaxopt,1)).^2+(pos_xy(nummaxopt([2:n,1]),2)-pos_xy(nummaxopt,2)).^2));
+	figure('name',['最优路径'],'numbertitle','off')
+	startnum=find(nummaxopt(circlenum(1:n))==1);
+	endnum=(startnum+1).*(startnum<n)+(startnum==n);
+	plot(pos_xy(nummaxopt(circlenum),1),pos_xy(nummaxopt(circlenum),2),'-o','linewidth',3);
+	grid on;
+	set(gca,'fontsize',16);
+	for i=1:n
+		text(pos_xy(i,1),pos_xy(i,2),['   'num2str(i)]);
+	end
+	text(pos_xy(1,1),pos_xy(1,2),['    起点']);
+	text(pos_xy(nummaxopt(circlenum(endnum)),1),pos_xy(nummaxopt(circlenum(endnum)),2),['    终点']);
+	xlabel('景点位置横坐标','fontsize',16);
+	ylabel('景点位置纵坐标','fontsize',16);
+end

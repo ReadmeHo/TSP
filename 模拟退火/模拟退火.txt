@@ -1,0 +1,84 @@
+Location=[0,0;12,0;-1.8677,14.4114;-7.7733,1.8911;-2.3333,4.4222;-8.9721,8.8862];
+%Location=[0,0;12,0;-1.8677,14.4114;-7.7733,1.8911;-2.3333,4.4222;-10.3138,4.9808];
+
+NumCity=6;%城市数量
+MaxTrialN=30;%恒温条件下的最大迭代步数
+Maxstep=200;%最大迭代次数
+Temperature=300;%初始温度
+MaxE_R=zeros(Maxstep,1);%初始化最大能量
+MinE_R=zeros(Maxstep,1);%初始化最小能量
+Energy_R=zeros(Maxstep,1);%实际能量
+%计算邻接矩阵
+Distance=zeros(NumCity,NumCity);
+for city_I=1:NumCity
+	for city_J=1:NumCity
+		Distance(city_I,city_J)=norm(Location(city_I,:)-Location(city_J,:));
+	end
+end
+
+Path=randperm(NumCity);%随机构造一条回路
+Energy=sum(Distance((Path([1:NumCity,1])-1)*NumCity+Path([2:NumCity,1:2])));%使用该回路的长度作为能量值
+figure('name','初始条件下的路径','numbertitle','off');
+
+MinE=Energy;%初始化最低温度
+MaxE=Energy;%初始化最高温度
+%画出各城市
+x_pos=Location(Path([1:NumCity,1]),1);
+y_pos=Location(Path([1:NumCity,1]),2);
+plot(x_pos,y_pos,'o',x_pos,y_pos,'linewidth',3);
+grid on;
+%标记城市号码
+for i=1:NumCity
+	text(Location(i,1),Location(i,2),['城市',num2str(i)],'fontsize',16);
+end
+%画出初始化回路
+title(['初始条件下的路径长度为',num2str(Energy),'km'],'fontsize',16);
+xlabel('x','fontsize',16);
+ylabel('y','fontsize',16);
+set(gca,'fontsize',16);
+
+for iterstep=1:Maxstep
+	[MaxE,MinE,Path,Energy]=Annealing(Path,Energy,Temperature,MaxE,MinE,NumCity,Distance,MaxTrialN);
+	Temperature=Temperature/log(iterstep+1);%降温
+	MaxE_R(iterstep)=MaxE;
+	MinE_R(iterstep)=MinE;
+	Energy_R(iterstep)=Energy;
+	MinE=Energy;
+	MaxE=Energy;
+end
+%计算最优解回路长度
+lsum=0;
+for i=1:6
+	if(i<6)
+		lsum=lsum+Distance(Path(i),Path(i+1));
+	else
+		lsum=lsum+Distance(Path(i),Path(1));
+	end
+end
+%画出最优解回路
+figure('name','收敛条件下的路径','numbertitle','off')
+x_pos=Location(Path([1:NumCity,1]),1);
+y_pos=Location(Path([1:NumCity,1]),2);
+plot(x_pos,y_pos,'o',x_pos,y_pos,'linewidth',3);
+grid on;
+%标记城市
+for i=1:NumCity
+	text(Location(i,1),Location(i,2),['城市',num2str(i)],'fontsize',16);
+end
+
+title(['收敛条件下路径的长度为',num2str(lsum),'km'],'fontsize',16);
+xlabel('x 坐标（单位：km）','fontsize',16);
+ylabel('y 坐标（单位：km）','fontsize',16);
+
+
+%以下可以不运行
+set(gca,'fontsize',16);
+figure('name','能量函数的变化','numbertitle','off')
+t=(1:Maxstep);
+plot(t,MaxE_R,t,MinE_R,t,Energy_R,'linewidth',3);
+grid on;
+
+h=legend('最大能量','最小能量','解的能量');
+set(h,'font',16);
+title('能量函数的变化','fontsize',16);
+
