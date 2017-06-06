@@ -8,20 +8,21 @@ import view.Frame;
 
 public class Main {
     public static int [][] xy={{120,50},{240,50},{101,194},{43,68},{97,94},{30,138}};//城市坐标
-    public static int[][] c={
-	{1,1,1,1,1,1},
-	{1,1,1,1,1,1},
-	{1,1,1,1,1,1},
-	{1,1,1,1,1,1},
-	{1,1,1,1,1,1},
-	{1,1,1,1,1,1}
-    };//设置哪条边不画
+    public static int[][] c;//设置哪条边不画,为零的元素对应的边将不会画出来
     
-    public static void main(String[] args) {		
+    public static void main(String[] args) {
+        c=new int[xy.length][xy.length];
+        initc();
         Bttsp abc=new Bttsp(xy);	
 	abc.tsp();	
 	init(abc.bestx);
     }
+    //默认情况下所有边都会画出来
+    public static void initc(){
+        for(int i=0;i<xy.length;i++)
+            for(int j=0;j<xy.length;j++)
+                c[i][j]=1;
+    }        
     public static void addcomponent(JFrame j,int[] result){
         //标记城市编号
         JLabel[] jLabels=new JLabel[6];
@@ -39,7 +40,7 @@ public class Main {
     public static void init(int[] result){
 	JFrame j=new JFrame();        
         addcomponent(j,result);
-	j.setTitle("分支限界法");
+	j.setTitle("回溯法");
 	j.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	j.setSize(300, 300);
 	j.setVisible(true);		
