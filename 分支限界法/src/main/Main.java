@@ -1,7 +1,6 @@
 package main;
 
 import algorithm.Bbtsp;
-import java.awt.Point; 
 import javax.swing.JLabel;
 import javax.swing.JFrame;
 import view.Frame;
@@ -22,6 +21,11 @@ public class Main {
         for(int i=0;i<xy.length;i++)
             for(int j=0;j<xy.length;j++)
                 c[i][j]=1;
+    }    
+    public static void init(int[] result){
+	JFrame j=new JFrame();        
+        addcomponent(j,result);
+	set(j);	
     }
     public static void addcomponent(JFrame j,int[] result){
         //标记城市编号
@@ -31,18 +35,13 @@ public class Main {
             jLabels[i].setBounds(xy[i][0]+10, xy[i][1]+10, 10, 10);
             j.add(jLabels[i]);
         }
-        Frame f=new Frame(c,result);
-	for(int i=0;i<xy.length;i++)
-	    f.addPoint(new Point(xy[i][0],xy[i][1]));
-        f.repaint();
+        Frame f=new Frame(c,result,xy);	
         j.getContentPane().add(f);
     }
-    public static void init(int[] result){
-	JFrame j=new JFrame();        
-        addcomponent(j,result);
-	j.setTitle("分支限界法");
-	j.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	j.setSize(300, 300);
-	j.setVisible(true);		
-    }    
+    public static void set(JFrame j){
+        j.setTitle("分支限界法");
+        j.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        j.setSize(300, 300);
+        j.setVisible(true); 
+    }
 }
